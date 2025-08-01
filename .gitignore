@@ -1,0 +1,51 @@
+# Go build files
+/bin/
+/build/
+/dist/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# IDE / editor files
+.vscode/
+.idea/
+*.swp
+*.sublime-project
+*.sublime-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment & secret files
+.env
+.env.*
+
+# Dependency/vendor directory (jika tidak di-commit)
+vendor/
+
+# Uploaded or generated files
+storage/
+assets/
+volumes/
+tmp/
+logs/
+
+# Docker
+*.pid
+*.log
+docker-compose.override.yml
+
+# Coverage & test output
+coverage/
+*.coverprofile
+
+# Others
+*.bak
+*.old
+*.orig
+*.tmp
