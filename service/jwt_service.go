@@ -1,6 +1,6 @@
 package service
 
-import (
+import (	
 	"os"
 	"time"
 
@@ -11,13 +11,11 @@ import (
 type (
 	InterfaceJWTService interface {
 		GenerateToken(userID string, role string) (string, string, error)
-		ValidateToken(token string) (*jwt.Token, error)
-		GetUserIDByToken(tokenString string) (string, error)
-		GetRoleByToken(tokenString string) (string, error)
+		ValidateToken(token string) (*jwt.Token, *jwtCustomClaims, error)
 	}
 
 	jwtCustomClaims struct {
-		UserID string `json:"user_id"`
+		UserID string `json:"id"`
 		Role   string `json:"role"`
 		jwt.RegisteredClaims
 	}
@@ -29,12 +27,11 @@ type (
 )
 
 func getSecretKey() string {
-	secretKey := os.Getenv("JWT_SECRET")
-	if secretKey == "" {
-		secretKey = "Template"
+	key := os.Getenv("JWT_SECRET")
+	if key == "" {
+		key = "Template"
 	}
-
-	return secretKey
+	return key
 }
 
 func NewJWTService() *JWTService {
@@ -44,78 +41,58 @@ func NewJWTService() *JWTService {
 	}
 }
 
-func (j *JWTService) GenerateToken(userID string, role string) (string, string, error) {
+func (j *JWTService) GenerateToken(userID, role string) (string, string, error) {
+	// Access token
 	accessClaims := jwtCustomClaims{
-		userID,
-		role,
-		jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Second * 300)),
+		UserID: userID,
+		Role:   role,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(5 * time.Minute)),
 			Issuer:    j.issuer,
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	}
 
-	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims)
-	accessTokenString, err := accessToken.SignedString([]byte(j.secretKey))
+	accessToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims).SignedString([]byte(j.secretKey))
 	if err != nil {
 		return "", "", constants.ErrGenerateAccessToken
 	}
 
+	// Refresh token
 	refreshClaims := jwtCustomClaims{
-		userID,
-		role,
-		jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Second * 3600 * 24 * 7)),
+		UserID: userID,
+		Role:   role,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(7 * 24 * time.Hour)),
 			Issuer:    j.issuer,
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	}
 
-	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
-	refreshTokenString, err := refreshToken.SignedString([]byte(j.secretKey))
+	refreshToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims).SignedString([]byte(j.secretKey))
 	if err != nil {
 		return "", "", constants.ErrGenerateRefreshToken
 	}
 
-	return accessTokenString, refreshTokenString, nil
+	return accessToken, refreshToken, nil
 }
 
-func (j *JWTService) parseToken(t_ *jwt.Token) (any, error) {
-	if _, ok := t_.Method.(*jwt.SigningMethodHMAC); !ok {
-		return nil, constants.ErrUnexpectedSigningMethod
-	}
+func (j *JWTService) ValidateToken(tokenString string) (*jwt.Token, *jwtCustomClaims, error) {
+	claims := &jwtCustomClaims{}
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(t *jwt.Token) (interface{}, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, constants.ErrUnexpectedSigningMethod
+		}
+		return []byte(j.secretKey), nil
+	})
 
-	return []byte(j.secretKey), nil
-}
-
-func (j *JWTService) ValidateToken(tokenString string) (*jwt.Token, error) {
-	return jwt.ParseWithClaims(tokenString, &jwtCustomClaims{}, j.parseToken)
-}
-
-func (j *JWTService) GetUserIDByToken(tokenString string) (string, error) {
-	token, err := j.ValidateToken(tokenString)
 	if err != nil {
-		return "", constants.ErrValidateToken
+		return nil, nil, constants.ErrValidateToken
 	}
 
-	claims, ok := token.Claims.(*jwtCustomClaims)
-	if !ok || !token.Valid {
-		return "", constants.ErrTokenInvalid
+	if !token.Valid {
+		return nil, nil, constants.ErrTokenInvalid
 	}
 
-	return claims.UserID, nil
-}
-
-func (j *JWTService) GetRoleByToken(tokenString string) (string, error) {
-	token, err := j.ValidateToken(tokenString)
-	if err != nil {
-		return "", constants.ErrValidateToken
-	}
-
-	claims, ok := token.Claims.(*jwtCustomClaims)
-	if !ok || !token.Valid {
-		return "", constants.ErrTokenInvalid
-	}
-
-	return claims.Role, nil
+	return token, claims, nil
 }

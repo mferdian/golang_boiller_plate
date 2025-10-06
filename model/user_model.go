@@ -7,13 +7,14 @@ import (
 )
 
 type User struct {
-	ID       uuid.UUID `gorm:"type:uuid;primaryKey" json:"user_id"`
-	Name     string    `json:"user_name"`
-	Email    string    `gorm:"unique; not null" json:"user_email"`
-	Password string    `json:"user_password"`
-	NoTelp   string    `json:"user_no_telp"`
-	Address  string    `json:"user_address"`
-	Role     string    `json:"role"`
+	ID          uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
+	Name        string    `json:"name"`
+	Email       string    `gorm:"unique; not null" json:"email"`
+	Password    string    `json:"password"`
+	PhoneNumber string    `json:"phone_number"`
+	Address     string    `json:"address"`
+	Role        string    `json:"role"`
+
 
 	TimeStamp
 }

@@ -7,11 +7,11 @@ import (
 
 type (
 	UserResponse struct {
-		ID      uuid.UUID `json:"user_id"`
-		Name    string    `json:"user_name"`
-		Email   string    `json:"user_email"`
-		NoTelp  string    `json:"user_no_telp"`
-		Address string    `json:"user_address"`
+		ID          uuid.UUID `json:"id"`
+		Name        string    `json:"name"`
+		Email       string    `json:"email"`
+		PhoneNumber string    `json:"phone_number"`
+		Address     string    `json:"address"`
 	}
 
 	RegisterUserRequest struct {
@@ -21,7 +21,7 @@ type (
 	}
 
 	RegisterUserResponse struct {
-		ID    uuid.UUID `json:"user_id"`
+		ID    uuid.UUID `json:"id"`
 		Name  string    `json:"name"`
 		Email string    `json:"email"`
 	}
@@ -37,20 +37,20 @@ type (
 	}
 
 	CreateUserRequest struct {
-		Name     string `json:"name"`
-		Email    string `json:"email"`
-		Password string `json:"password"`
-		NoTelp   string `json:"user_no_telp"`
-		Address  string `json:"user_address"`
+		Name        string `json:"name"`
+		Email       string `json:"email"`
+		Password    string `json:"password"`
+		PhoneNumber string `json:"phone_number"`
+		Address     string `json:"address"`
 	}
 
 	UpdateUserRequest struct {
-		ID       string  `json:"-"`
-		Name     *string `json:"name,omitempty"`
-		Email    *string `json:"email,omitempty"`
-		Password *string `json:"password,omitempty"`
-		NoTelp   *string `json:"user_no_telp,omitempty"`
-		Address  *string `json:"user_address,omitempty"`
+		ID          string  `json:"-"`
+		Name        *string `json:"name,omitempty"`
+		Email       *string `json:"email,omitempty"`
+		Password    *string `json:"password,omitempty"`
+		PhoneNumber *string `json:"phone_number,omitempty"`
+		Address     *string `json:"address,omitempty"`
 	}
 
 	DeleteUserRequest struct {
@@ -59,7 +59,7 @@ type (
 
 	UserPaginationRequest struct {
 		PaginationRequest
-		UserID string `form:"user_id"`
+		UserID string `form:"id"`
 	}
 
 	UserPaginationResponse struct {

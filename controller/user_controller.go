@@ -7,10 +7,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/mferdian/golang_boiller_plate/constants"
 	"github.com/mferdian/golang_boiller_plate/dto"
+	"github.com/mferdian/golang_boiller_plate/logging"
 	"github.com/mferdian/golang_boiller_plate/service"
 	"github.com/mferdian/golang_boiller_plate/utils"
-	"github.com/mferdian/golang_boiller_plate/logging"
-
 )
 
 type (
@@ -53,12 +52,10 @@ func (uc *UserController) Register(ctx *gin.Context) {
 		return
 	}
 
-	logging.Log.Infof(constants.MESSAGE_SUCCESS_REGISTER + ": %s", result.Email)
+	logging.Log.Infof(constants.MESSAGE_SUCCESS_REGISTER+": %s", result.Email)
 	res := utils.BuildResponseSuccess(constants.MESSAGE_SUCCESS_REGISTER, result)
 	ctx.JSON(http.StatusCreated, res)
 }
-
-
 
 func (uc *UserController) Login(ctx *gin.Context) {
 	var payload dto.LoginUserRequest
@@ -77,12 +74,10 @@ func (uc *UserController) Login(ctx *gin.Context) {
 		return
 	}
 
-	logging.Log.Infof(constants.MESSAGE_SUCCESS_LOGIN_USER + ": %s", payload.Email)
+	logging.Log.Infof(constants.MESSAGE_SUCCESS_LOGIN_USER+": %s", payload.Email)
 	res := utils.BuildResponseSuccess(constants.MESSAGE_SUCCESS_LOGIN_USER, result)
 	ctx.JSON(http.StatusOK, res)
 }
-
-
 
 func (uc *UserController) CreateUser(ctx *gin.Context) {
 	var payload dto.CreateUserRequest
@@ -101,12 +96,10 @@ func (uc *UserController) CreateUser(ctx *gin.Context) {
 		return
 	}
 
-	logging.Log.Infof(constants.MESSAGE_SUCCESS_CREATE_USER + ": %s", result.Email)
+	logging.Log.Infof(constants.MESSAGE_SUCCESS_CREATE_USER+": %s", result.Email)
 	res := utils.BuildResponseSuccess(constants.MESSAGE_SUCCESS_CREATE_USER, result)
 	ctx.JSON(http.StatusCreated, res)
 }
-
-
 
 func (uc *UserController) GetAllUser(ctx *gin.Context) {
 	var query dto.UserPaginationRequest
@@ -125,7 +118,7 @@ func (uc *UserController) GetAllUser(ctx *gin.Context) {
 		return
 	}
 
-	logging.Log.Infof(constants.MESSAGE_SUCCESS_GET_LIST_USER + ": page %d", query.Page)
+	logging.Log.Infof(constants.MESSAGE_SUCCESS_GET_LIST_USER+": page %d", query.Page)
 	res := utils.Response{
 		Status:   true,
 		Messsage: constants.MESSAGE_SUCCESS_GET_LIST_USER,
@@ -135,11 +128,10 @@ func (uc *UserController) GetAllUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, res)
 }
 
-
 func (uc *UserController) GetUserByID(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 
-	userID := ctx.GetString("user_id")
+	userID := ctx.GetString("id")
 	role := ctx.GetString("role")
 
 	if role == constants.ENUM_ROLE_USER && userID != idStr {
@@ -164,11 +156,10 @@ func (uc *UserController) GetUserByID(ctx *gin.Context) {
 		return
 	}
 
-	logging.Log.Infof(constants.MESSAGE_SUCCESS_GET_DETAIL_USER + ": %s", idStr)
+	logging.Log.Infof(constants.MESSAGE_SUCCESS_GET_DETAIL_USER+": %s", idStr)
 	res := utils.BuildResponseSuccess(constants.MESSAGE_SUCCESS_GET_DETAIL_USER, result)
 	ctx.JSON(http.StatusOK, res)
 }
-
 
 func (uc *UserController) UpdateUser(ctx *gin.Context) {
 	idParam := ctx.Param("id")
@@ -179,7 +170,7 @@ func (uc *UserController) UpdateUser(ctx *gin.Context) {
 		return
 	}
 
-	userID := ctx.GetString("user_id")
+	userID := ctx.GetString("id")
 	role := ctx.GetString("role")
 
 	if role == constants.ENUM_ROLE_USER && userID != idParam {
@@ -207,11 +198,10 @@ func (uc *UserController) UpdateUser(ctx *gin.Context) {
 		return
 	}
 
-	logging.Log.Infof(constants.MESSAGE_SUCCESS_UPDATE_USER + ": %s", result.ID)
+	logging.Log.Infof(constants.MESSAGE_SUCCESS_UPDATE_USER+": %s", result.ID)
 	res := utils.BuildResponseSuccess(constants.MESSAGE_SUCCESS_UPDATE_USER, result)
 	ctx.JSON(http.StatusOK, res)
 }
-
 
 func (uc *UserController) DeleteUser(ctx *gin.Context) {
 	idParam := ctx.Param("id")
@@ -222,7 +212,7 @@ func (uc *UserController) DeleteUser(ctx *gin.Context) {
 		return
 	}
 
-	userID := ctx.GetString("user_id")
+	userID := ctx.GetString("id")
 	role := ctx.GetString("role")
 
 	if role == constants.ENUM_ROLE_USER && userID != idParam {
@@ -242,7 +232,7 @@ func (uc *UserController) DeleteUser(ctx *gin.Context) {
 		return
 	}
 
-	logging.Log.Infof(constants.MESSAGE_SUCCESS_DELETE_USER + ": %s", idParam)
+	logging.Log.Infof(constants.MESSAGE_SUCCESS_DELETE_USER+": %s", idParam)
 	res := utils.BuildResponseSuccess(constants.MESSAGE_SUCCESS_DELETE_USER, result)
 	ctx.JSON(http.StatusOK, res)
 }
