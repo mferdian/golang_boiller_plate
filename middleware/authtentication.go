@@ -22,7 +22,7 @@ func Authentication(jwtService service.InterfaceJWTService) gin.HandlerFunc {
 		}
 
 		if !strings.HasPrefix(authHeader, "Bearer ") {
-			logging.Log.Warn("Authorization header format is invalid")
+			logging.Log.Warn("Authorization header format invalid")
 			res := utils.BuildResponseFailed(constants.MESSAGE_FAILED_PROSES_REQUEST, constants.MESSAGE_FAILED_TOKEN_NOT_VALID, nil)
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, res)
 			return
@@ -30,7 +30,7 @@ func Authentication(jwtService service.InterfaceJWTService) gin.HandlerFunc {
 
 		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 
-		token, err := jwtService.ValidateToken(tokenStr)
+		token, claims, err := jwtService.ValidateToken(tokenStr)
 		if err != nil || !token.Valid {
 			logging.Log.Warnf("Invalid token: %v", err)
 			res := utils.BuildResponseFailed(constants.MESSAGE_FAILED_PROSES_REQUEST, constants.MESSAGE_FAILED_TOKEN_NOT_VALID, nil)
@@ -38,27 +38,11 @@ func Authentication(jwtService service.InterfaceJWTService) gin.HandlerFunc {
 			return
 		}
 
-		userID, err := jwtService.GetUserIDByToken(tokenStr)
-		if err != nil {
-			logging.Log.Warnf("Failed to extract user ID from token: %v", err)
-			res := utils.BuildResponseFailed(constants.MESSAGE_FAILED_PROSES_REQUEST, err.Error(), nil)
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, res)
-			return
-		}
-
-		role, err := jwtService.GetRoleByToken(tokenStr)
-		if err != nil {
-			logging.Log.Warnf("Failed to extract role from token: %v", err)
-			res := utils.BuildResponseFailed(constants.MESSAGE_FAILED_PROSES_REQUEST, err.Error(), nil)
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, res)
-			return
-		}
-
-		logging.Log.Infof("Authenticated request - UserID: %s, Role: %s", userID, role)
+		logging.Log.Infof("Authenticated request - UserID: %s, Role: %s", claims.UserID, claims.Role)
 
 		ctx.Set("Authorization", tokenStr)
-		ctx.Set("user_id", userID)
-		ctx.Set("role", role)
+		ctx.Set("id", claims.ID)
+		ctx.Set("role", claims.Role)
 
 		ctx.Next()
 	}

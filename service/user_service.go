@@ -73,7 +73,7 @@ func (us *UserService) Register(ctx context.Context, req dto.RegisterUserRequest
 		return dto.RegisterUserResponse{}, constants.ErrRegisterUser
 	}
 
-	logging.Log.Infof(constants.MESSAGE_SUCCESS_REGISTER + ": %s", user.Email)
+	logging.Log.Infof(constants.MESSAGE_SUCCESS_REGISTER+": %s", user.Email)
 
 	return dto.RegisterUserResponse{
 		ID:    user.ID,
@@ -100,15 +100,13 @@ func (us *UserService) Login(ctx context.Context, req dto.LoginUserRequest) (dto
 		return dto.LoginResponse{}, constants.ErrGenerateAccessToken
 	}
 
-	logging.Log.Infof(constants.MESSAGE_SUCCESS_LOGIN_USER + ": %s", user.Email)
+	logging.Log.Infof(constants.MESSAGE_SUCCESS_LOGIN_USER+": %s", user.Email)
 
 	return dto.LoginResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 	}, nil
 }
-
-
 
 func (us *UserService) CreateUser(ctx context.Context, req dto.CreateUserRequest) (dto.UserResponse, error) {
 	if len(req.Name) < 5 {
@@ -133,13 +131,13 @@ func (us *UserService) CreateUser(ctx context.Context, req dto.CreateUserRequest
 	}
 
 	user := model.User{
-		ID:       uuid.New(),
-		Name:     req.Name,
-		Email:    req.Email,
-		Password: req.Password,
-		NoTelp:   req.NoTelp,
-		Address:  req.Address,
-		Role:     constants.ENUM_ROLE_ADMIN,
+		ID:          uuid.New(),
+		Name:        req.Name,
+		Email:       req.Email,
+		Password:    req.Password,
+		PhoneNumber: req.PhoneNumber,
+		Address:     req.Address,
+		Role:        constants.ENUM_ROLE_ADMIN,
 	}
 
 	err = us.userRepo.CreateUser(ctx, nil, user)
@@ -148,17 +146,16 @@ func (us *UserService) CreateUser(ctx context.Context, req dto.CreateUserRequest
 		return dto.UserResponse{}, constants.ErrCreateUser
 	}
 
-	logging.Log.Infof(constants.MESSAGE_SUCCESS_CREATE_USER + ": %s", user.Email)
+	logging.Log.Infof(constants.MESSAGE_SUCCESS_CREATE_USER+": %s", user.Email)
 
 	return dto.UserResponse{
-		ID:      user.ID,
-		Name:    user.Name,
-		Email:   user.Email,
-		NoTelp:  user.NoTelp,
-		Address: user.Address,
+		ID:          user.ID,
+		Name:        user.Name,
+		Email:       user.Email,
+		PhoneNumber: user.PhoneNumber,
+		Address:     user.Address,
 	}, nil
 }
-
 
 func (us *UserService) ReadAllUserWithPagination(ctx context.Context, req dto.UserPaginationRequest) (dto.UserPaginationResponse, error) {
 	dataWithPaginate, err := us.userRepo.GetAllUserWithPagination(ctx, nil, req)
@@ -167,16 +164,16 @@ func (us *UserService) ReadAllUserWithPagination(ctx context.Context, req dto.Us
 		return dto.UserPaginationResponse{}, constants.ErrGetAllUserWithPagination
 	}
 
-	logging.Log.Infof(constants.MESSAGE_SUCCESS_GET_LIST_USER + ": page %d", req.Page)
+	logging.Log.Infof(constants.MESSAGE_SUCCESS_GET_LIST_USER+": page %d", req.Page)
 
 	var datas []dto.UserResponse
 	for _, user := range dataWithPaginate.Users {
 		datas = append(datas, dto.UserResponse{
-			ID:      user.ID,
-			Name:    user.Name,
-			Email:   user.Email,
-			NoTelp:  user.NoTelp,
-			Address: user.Address,
+			ID:          user.ID,
+			Name:        user.Name,
+			Email:       user.Email,
+			PhoneNumber: user.PhoneNumber,
+			Address:     user.Address,
 		})
 	}
 
@@ -191,7 +188,6 @@ func (us *UserService) ReadAllUserWithPagination(ctx context.Context, req dto.Us
 	}, nil
 }
 
-
 func (us *UserService) GetuserByID(ctx context.Context, userID string) (dto.UserResponse, error) {
 	if _, err := uuid.Parse(userID); err != nil {
 		logging.Log.Warn(constants.MESSAGE_FAILED_GET_DETAIL_USER + ": invalid UUID")
@@ -200,25 +196,25 @@ func (us *UserService) GetuserByID(ctx context.Context, userID string) (dto.User
 
 	user, _, err := us.userRepo.GetUserByID(ctx, nil, userID)
 	if err != nil {
-		logging.Log.WithError(err).WithField("user_id", userID).Error(constants.MESSAGE_FAILED_GET_DETAIL_USER)
+		logging.Log.WithError(err).WithField("id", userID).Error(constants.MESSAGE_FAILED_GET_DETAIL_USER)
 		return dto.UserResponse{}, constants.ErrGetUserByID
 	}
 
-	logging.Log.Infof(constants.MESSAGE_SUCCESS_GET_DETAIL_USER + ": %s", userID)
+	logging.Log.Infof(constants.MESSAGE_SUCCESS_GET_DETAIL_USER+": %s", userID)
 
 	return dto.UserResponse{
-		ID:      user.ID,
-		Name:    user.Name,
-		Email:   user.Email,
-		Address: user.Address,
-		NoTelp:  user.NoTelp,
+		ID:          user.ID,
+		Name:        user.Name,
+		Email:       user.Email,
+		Address:     user.Address,
+		PhoneNumber: user.PhoneNumber,
 	}, nil
 }
 
 func (us *UserService) UpdateUser(ctx context.Context, req dto.UpdateUserRequest) (dto.UserResponse, error) {
 	user, _, err := us.userRepo.GetUserByID(ctx, nil, req.ID)
 	if err != nil {
-		logging.Log.WithError(err).WithField("user_id", req.ID).Error(constants.MESSAGE_FAILED_UPDATE_USER)
+		logging.Log.WithError(err).WithField("id", req.ID).Error(constants.MESSAGE_FAILED_UPDATE_USER)
 		return dto.UserResponse{}, constants.ErrGetUserByID
 	}
 
@@ -258,8 +254,8 @@ func (us *UserService) UpdateUser(ctx context.Context, req dto.UpdateUserRequest
 		user.Password = hashed
 	}
 
-	if req.NoTelp != nil {
-		user.NoTelp = *req.NoTelp
+	if req.PhoneNumber != nil {
+		user.PhoneNumber = *req.PhoneNumber
 	}
 
 	if req.Address != nil {
@@ -272,18 +268,16 @@ func (us *UserService) UpdateUser(ctx context.Context, req dto.UpdateUserRequest
 		return dto.UserResponse{}, constants.ErrUpdateUser
 	}
 
-	logging.Log.Infof(constants.MESSAGE_SUCCESS_UPDATE_USER + ": %s", user.ID)
+	logging.Log.Infof(constants.MESSAGE_SUCCESS_UPDATE_USER+": %s", user.ID)
 
 	return dto.UserResponse{
-		ID:      user.ID,
-		Name:    user.Name,
-		Email:   user.Email,
-		NoTelp:  user.NoTelp,
-		Address: user.Address,
+		ID:          user.ID,
+		Name:        user.Name,
+		Email:       user.Email,
+		PhoneNumber: user.PhoneNumber,
+		Address:     user.Address,
 	}, nil
 }
-
-
 
 func (us *UserService) DeleteUser(ctx context.Context, req dto.DeleteUserRequest) (dto.UserResponse, error) {
 	user, _, err := us.userRepo.GetUserByID(ctx, nil, req.UserID)
@@ -298,14 +292,13 @@ func (us *UserService) DeleteUser(ctx context.Context, req dto.DeleteUserRequest
 		return dto.UserResponse{}, constants.ErrDeleteUserByID
 	}
 
-	logging.Log.Infof(constants.MESSAGE_SUCCESS_DELETE_USER + ": %s", req.UserID)
+	logging.Log.Infof(constants.MESSAGE_SUCCESS_DELETE_USER+": %s", req.UserID)
 
 	return dto.UserResponse{
-		ID:      user.ID,
-		Name:    user.Name,
-		Email:   user.Email,
-		NoTelp:  user.NoTelp,
-		Address: user.Address,
+		ID:          user.ID,
+		Name:        user.Name,
+		Email:       user.Email,
+		PhoneNumber: user.PhoneNumber,
+		Address:     user.Address,
 	}, nil
 }
-

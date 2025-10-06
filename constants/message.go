@@ -16,9 +16,10 @@ const (
 	MESSAGE_FAILED_UPDATE_USER         = "failed update user"
 	MESSAGE_FAILED_DELETE_USER         = "failed delete user"
 	MESSAGE_FAILED_LOGIN_USER          = "failed login user"
-	MESSAGE_FAILED_UUID_FORMAT         = ""
-	MESSAGE_FAILED_REGISTER            = ""
-	MESSAGE_SUCCESS_REGISTER           = ""
+	MESSAGE_FAILED_UUID_FORMAT         = "failed uuid format"
+	MESSAGE_FAILED_REGISTER            = "failed register"
+	MESSAGE_SUCCESS_REGISTER           = "success register"
+	MESSAGE_FAILED_CREATE_PROPOSAL     = "failed create proposal"
 
 	// success
 	MESSAGE_SUCCESS_CREATE_USER     = "success create user"
@@ -26,7 +27,7 @@ const (
 	MESSAGE_SUCCESS_GET_LIST_USER   = "success get list user"
 	MESSAGE_SUCCESS_UPDATE_USER     = "success update user"
 	MESSAGE_SUCCESS_DELETE_USER     = "success delete user"
-	MESSAGE_SUCCESS_LOGIN_USER      = ""
+	MESSAGE_SUCCESS_LOGIN_USER      = "success login user"
 )
 
 var (
@@ -52,7 +53,11 @@ var (
 	ErrDeniedAccess             = errors.New("denied access")
 	ErrGetPermissionsByRoleID   = errors.New("failed get all permission by role id")
 	ErrInvalidPhoneNumber       = errors.New("invalid phone number")
-	ErrInvalidLoginCredential   = errors.New("")
-	ErrCreateUser               = errors.New("")
-	ErrInvalidUUID              = errors.New("")
+	ErrInvalidLoginCredential   = errors.New("invalid login credential")
+	ErrCreateUser               = errors.New("failed to create user")
+	ErrInvalidUUID              = errors.New("invalid uuid")
+	ErrGetIDFromToken           = errors.New("failed to get id from token")
+	ErrContext                  = errors.New("context error")
+	ErrInvalidProposalName      = errors.New("invalid proposal name")
+	ErrCreateProposal           = errors.New("failed to create proposal")
 )
