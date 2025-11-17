@@ -102,6 +102,24 @@ func (uc *UserController) CreateUser(ctx *gin.Context) {
 }
 
 func (uc *UserController) GetAllUser(ctx *gin.Context) {
+	paginationParam := ctx.DefaultQuery("pagination", "true")
+	usePagination := paginationParam != "false"
+
+	search := ctx.DefaultQuery("search", "")
+
+	if !usePagination {
+		// Tanpa pagination
+		result, err := uc.userService.GetAllUser(ctx, search)
+		if err != nil {
+			res := utils.BuildResponseFailed(constants.MESSAGE_FAILED_GET_LIST_USER, err.Error(), nil)
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, res)
+			return
+		}
+		res := utils.BuildResponseSuccess(constants.MESSAGE_SUCCESS_GET_LIST_USER, result)
+		ctx.AbortWithStatusJSON(http.StatusOK, res)
+		return
+	}
+
 	var query dto.UserPaginationRequest
 	if err := ctx.ShouldBindQuery(&query); err != nil {
 		logging.Log.WithError(err).Warn(constants.MESSAGE_FAILED_GET_DATA_FROM_BODY)
@@ -110,7 +128,7 @@ func (uc *UserController) GetAllUser(ctx *gin.Context) {
 		return
 	}
 
-	result, err := uc.userService.ReadAllUserWithPagination(ctx.Request.Context(), query)
+	result, err := uc.userService.GetAllUserWithPagination(ctx.Request.Context(), query)
 	if err != nil {
 		logging.Log.WithError(err).Error(constants.MESSAGE_FAILED_GET_LIST_USER)
 		res := utils.BuildResponseFailed(constants.MESSAGE_FAILED_GET_LIST_USER, err.Error(), nil)

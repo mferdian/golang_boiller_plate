@@ -16,8 +16,8 @@ func UserRoutes(
 	user.Use(middleware.Authentication(jwtService))
 
 	// --- User Routes ---
-	user.PATCH("/update-profile/:id", userController.UpdateUser)
-	user.GET("/get-detail-user/:id", userController.GetUserByID)
-	user.DELETE("/delete-profile/:id", userController.DeleteUser)
+	user.PATCH("/:id", userController.UpdateUser)
+	user.GET("/:id", userController.GetUserByID)
+	user.DELETE("/:id", userController.DeleteUser)
 	
 }

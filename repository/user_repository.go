@@ -15,6 +15,7 @@ type (
 		Register(ctx context.Context, tx *gorm.DB, user model.User) error
 		GetUserByID(ctx context.Context, tx *gorm.DB, userID string) (model.User, bool, error)
 		GetUserByEmail(ctx context.Context, tx *gorm.DB, email string) (model.User, bool, error)
+		GetAllUser(ctx context.Context, tx *gorm.DB, search string) ([]model.User, error)
 		GetAllUserWithPagination(ctx context.Context, tx *gorm.DB, req dto.UserPaginationRequest) (dto.UserPaginationRepositoryResponse, error)
 		CreateUser(ctx context.Context, tx *gorm.DB, user model.User) error
 		UpdateUser(ctx context.Context, tx *gorm.DB, user model.User) error
@@ -53,7 +54,6 @@ func (ur *UserRepository) GetUserByID(ctx context.Context, tx *gorm.DB, userID s
 	return user, true, nil
 }
 
-
 func (ur *UserRepository) GetUserByEmail(ctx context.Context, tx *gorm.DB, email string) (model.User, bool, error) {
 	if tx == nil {
 		tx = ur.db
@@ -67,6 +67,28 @@ func (ur *UserRepository) GetUserByEmail(ctx context.Context, tx *gorm.DB, email
 	return user, true, nil
 }
 
+func (ur *UserRepository) GetAllUser(ctx context.Context, tx *gorm.DB, search string) ([]model.User, error) {
+	if tx == nil {
+		tx = ur.db
+	}
+
+	var users []model.User
+
+	query := tx.WithContext(ctx).Model(&model.User{})
+
+	if search != "" {
+		searchValue := "%" + strings.ToLower(search) + "%"
+		query = query.Where("LOWER(name) LIKE ? OR LOWER(email) LIKE ?",
+			searchValue, searchValue)
+	}
+
+	if err := query.Find(&users).Error; err != nil {
+		return nil, err
+	}
+
+	return users, nil
+
+}
 
 func (ur *UserRepository) GetAllUserWithPagination(ctx context.Context, tx *gorm.DB, req dto.UserPaginationRequest) (dto.UserPaginationRepositoryResponse, error) {
 	if tx == nil {

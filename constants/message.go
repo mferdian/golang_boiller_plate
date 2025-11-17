@@ -3,7 +3,6 @@ package constants
 import "errors"
 
 const (
-	// failed
 	MESSAGE_FAILED_PROSES_REQUEST      = "failed proses request"
 	MESSAGE_FAILED_ACCESS_DENIED       = "failed access denied"
 	MESSAGE_FAILED_TOKEN_NOT_FOUND     = "failed token not found"
@@ -21,7 +20,6 @@ const (
 	MESSAGE_SUCCESS_REGISTER           = "success register"
 	MESSAGE_FAILED_CREATE_PROPOSAL     = "failed create proposal"
 
-	// success
 	MESSAGE_SUCCESS_CREATE_USER     = "success create user"
 	MESSAGE_SUCCESS_GET_DETAIL_USER = "success get detail user"
 	MESSAGE_SUCCESS_GET_LIST_USER   = "success get list user"
@@ -60,4 +58,5 @@ var (
 	ErrContext                  = errors.New("context error")
 	ErrInvalidProposalName      = errors.New("invalid proposal name")
 	ErrCreateProposal           = errors.New("failed to create proposal")
+	ErrGetAllUser               = errors.New("failed get all users")
 )
