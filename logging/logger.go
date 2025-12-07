@@ -23,7 +23,6 @@ func SetUpLogger() {
 		panic("failed to open log file: " + err.Error())
 	}
 
-	// Output ke console dan file sekaligus
 	multiWriter := io.MultiWriter(os.Stdout, file)
 	Log.SetOutput(multiWriter)
 

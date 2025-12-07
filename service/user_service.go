@@ -19,7 +19,8 @@ type (
 
 		CreateUser(ctx context.Context, req dto.CreateUserRequest) (dto.UserResponse, error)
 		GetuserByID(ctx context.Context, userID string) (dto.UserResponse, error)
-		ReadAllUserWithPagination(ctx context.Context, req dto.UserPaginationRequest) (dto.UserPaginationResponse, error)
+		GetAllUser(ctx context.Context, search string) ([]dto.UserResponse, error)
+		GetAllUserWithPagination(ctx context.Context, req dto.UserPaginationRequest) (dto.UserPaginationResponse, error)
 		UpdateUser(ctx context.Context, req dto.UpdateUserRequest) (dto.UserResponse, error)
 		DeleteUser(ctx context.Context, req dto.DeleteUserRequest) (dto.UserResponse, error)
 	}
@@ -157,7 +158,29 @@ func (us *UserService) CreateUser(ctx context.Context, req dto.CreateUserRequest
 	}, nil
 }
 
-func (us *UserService) ReadAllUserWithPagination(ctx context.Context, req dto.UserPaginationRequest) (dto.UserPaginationResponse, error) {
+func (us *UserService) GetAllUser(ctx context.Context, search string) ([]dto.UserResponse, error) {
+	users, err := us.userRepo.GetAllUser(ctx, nil, search)
+
+	if err != nil {
+		return nil, constants.ErrGetAllUser
+	}
+
+	var datas []dto.UserResponse
+	for _, user := range users {
+		data := dto.UserResponse{
+			ID:          user.ID,
+			Name:        user.Name,
+			Email:       user.Email,
+			PhoneNumber: user.PhoneNumber,
+			Address:     user.Address,
+		}
+
+		datas = append(datas, data)
+	}
+	return datas, nil
+}
+
+func (us *UserService) GetAllUserWithPagination(ctx context.Context, req dto.UserPaginationRequest) (dto.UserPaginationResponse, error) {
 	dataWithPaginate, err := us.userRepo.GetAllUserWithPagination(ctx, nil, req)
 	if err != nil {
 		logging.Log.WithError(err).Error(constants.MESSAGE_FAILED_GET_LIST_USER)
