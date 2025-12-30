@@ -50,8 +50,12 @@ func (us *UserService) Register(ctx context.Context, req dto.RegisterUserRequest
 	}
 
 	_, found, err := us.userRepo.GetUserByEmail(ctx, nil, req.Email)
-	if err == nil && found {
-		logging.Log.Warn(constants.MESSAGE_FAILED_REGISTER + ": email already exists")
+	if err != nil {
+		logging.Log.Error("failed check email", err)
+		return dto.RegisterUserResponse{}, constants.ErrInternal
+	}
+
+	if found {
 		return dto.RegisterUserResponse{}, constants.ErrEmailAlreadyExists
 	}
 
@@ -121,8 +125,12 @@ func (us *UserService) CreateUser(ctx context.Context, req dto.CreateUserRequest
 	}
 
 	_, found, err := us.userRepo.GetUserByEmail(ctx, nil, req.Email)
-	if err == nil && found {
-		logging.Log.Warn(constants.MESSAGE_FAILED_CREATE_USER + ": email already exists")
+	if err != nil {
+		logging.Log.Error("failed check email", err)
+		return dto.UserResponse{}, constants.ErrInternal
+	}
+
+	if found {
 		return dto.UserResponse{}, constants.ErrEmailAlreadyExists
 	}
 
@@ -160,11 +168,12 @@ func (us *UserService) CreateUser(ctx context.Context, req dto.CreateUserRequest
 
 func (us *UserService) GetAllUser(ctx context.Context, search string) ([]dto.UserResponse, error) {
 	users, err := us.userRepo.GetAllUser(ctx, nil, search)
-
 	if err != nil {
+		logging.Log.WithError(err).Error(constants.MESSAGE_FAILED_GET_LIST_USER)
 		return nil, constants.ErrGetAllUser
 	}
 
+	logging.Log.Infof(constants.MESSAGE_SUCCESS_GET_LIST_USER)
 	var datas []dto.UserResponse
 	for _, user := range users {
 		data := dto.UserResponse{

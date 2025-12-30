@@ -59,4 +59,5 @@ var (
 	ErrInvalidProposalName      = errors.New("invalid proposal name")
 	ErrCreateProposal           = errors.New("failed to create proposal")
 	ErrGetAllUser               = errors.New("failed get all users")
+	ErrInternal                 = errors.New("error internal server error")
 )
