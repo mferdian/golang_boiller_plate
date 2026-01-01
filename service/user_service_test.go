@@ -2,12 +2,14 @@ package service
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/mferdian/golang_boiller_plate/constants"
 	"github.com/mferdian/golang_boiller_plate/dto"
+	"github.com/mferdian/golang_boiller_plate/helpers"
 	"github.com/mferdian/golang_boiller_plate/model"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -15,10 +17,10 @@ import (
 
 type mockUserRepo struct {
 	registerFn             func(ctx context.Context, user model.User) error
-	getByIDFn              func(ctx context.Context, userID string) (model.User, bool, error)
+	getByIDFn              func(ctx context.Context, tx *gorm.DB, id string) (model.User, bool, error)
 	getByEmailFn           func(ctx context.Context, email string) (model.User, bool, error)
 	getAllFn               func(ctx context.Context, search string) ([]model.User, error)
-	getAllWithPaginationFn func(ctx context.Context, req dto.UserPaginationRequest) (dto.UserPaginationRepositoryResponse, error)
+	getAllWithPaginationFn func(ctx context.Context, tx *gorm.DB, req dto.UserPaginationRequest) (dto.UserPaginationRepositoryResponse, error)
 	createFn               func(ctx context.Context, user model.User) error
 	updateFn               func(ctx context.Context, user model.User) error
 	deleteByIDFn           func(ctx context.Context, userID string) error
@@ -31,9 +33,9 @@ func (m *mockUserRepo) Register(ctx context.Context, _ *gorm.DB, user model.User
 	return nil
 }
 
-func (m *mockUserRepo) GetUserByID(ctx context.Context, _ *gorm.DB, userID string) (model.User, bool, error) {
+func (m *mockUserRepo) GetUserByID(ctx context.Context, tx *gorm.DB, userID string) (model.User, bool, error) {
 	if m.getByIDFn != nil {
-		return m.getByIDFn(ctx, userID)
+		return m.getByIDFn(ctx, tx, userID)
 	}
 	return model.User{}, false, nil
 }
@@ -52,9 +54,9 @@ func (m *mockUserRepo) GetAllUser(ctx context.Context, _ *gorm.DB, search string
 	return []model.User{}, nil
 }
 
-func (m *mockUserRepo) GetAllUserWithPagination(ctx context.Context, _ *gorm.DB, req dto.UserPaginationRequest) (dto.UserPaginationRepositoryResponse, error) {
+func (m *mockUserRepo) GetAllUserWithPagination(ctx context.Context, tx *gorm.DB, req dto.UserPaginationRequest) (dto.UserPaginationRepositoryResponse, error) {
 	if m.getAllWithPaginationFn != nil {
-		return m.getAllWithPaginationFn(ctx, req)
+		return m.getAllWithPaginationFn(ctx, tx, req)
 	}
 	return dto.UserPaginationRepositoryResponse{}, nil
 }
@@ -546,7 +548,6 @@ func TestUserService_CreateUser_Failed(t *testing.T) {
 	}
 }
 
-
 // GetAllUser
 func TestUserService_GetAllUser_Error(t *testing.T) {
 	repo := &mockUserRepo{
@@ -567,3 +568,304 @@ func TestUserService_GetAllUser_Error(t *testing.T) {
 		t.Fatalf("expected nil response, got %v", resp)
 	}
 }
+
+// Get All Users With Pagination
+func TestUserService_GetAllUserWithPagination_Error(t *testing.T) {
+	repo := &mockUserRepo{
+		getAllWithPaginationFn: func(ctx context.Context, tx *gorm.DB, req dto.UserPaginationRequest) (dto.UserPaginationRepositoryResponse, error) {
+			return dto.UserPaginationRepositoryResponse{}, constants.ErrInternal
+		},
+	}
+
+	us := NewUserService(repo, &mockJWTService{})
+
+	resp, err := us.GetAllUserWithPagination(
+		context.Background(),
+		dto.UserPaginationRequest{
+			PaginationRequest: dto.PaginationRequest{
+				Page:    1,
+				PerPage: 10,
+				Search:  "enak",
+			}},
+	)
+
+	if !errors.Is(err, constants.ErrGetAllUserWithPagination) {
+		t.Fatalf("expected ErrGetAllUserWithPagination, got %v", err)
+	}
+
+	if len(resp.Data) != 0 {
+		t.Fatalf("expected empty data, got %v", resp.Data)
+	}
+}
+
+// Get User By ID
+func TestUserService_GetUserByID_RepoError(t *testing.T) {
+	userID := uuid.NewString()
+
+	repo := &mockUserRepo{
+		getByIDFn: func(ctx context.Context, tx *gorm.DB, id string) (model.User, bool, error) {
+			return model.User{}, false, errors.New("db error")
+		},
+	}
+
+	us := NewUserService(repo, &mockJWTService{})
+
+	resp, err := us.GetuserByID(context.Background(), userID)
+
+	if !errors.Is(err, constants.ErrGetUserByID) {
+		t.Fatalf("expected ErrGetUserByID, got %v", err)
+	}
+
+	if resp.ID != uuid.Nil {
+		t.Fatalf("expected empty response, got %+v", resp)
+	}
+}
+func TestUserService_GetUserByID_InvalidUUID(t *testing.T) {
+	repo := &mockUserRepo{}
+
+	us := NewUserService(repo, &mockJWTService{})
+
+	resp, err := us.GetuserByID(context.Background(), "invalid-uuid")
+
+	if !errors.Is(err, constants.ErrInvalidUUID) {
+		t.Fatalf("expected ErrInvalidUUID, got %v", err)
+	}
+
+	if resp.ID != uuid.Nil {
+		t.Fatalf("expected empty response, got %+v", resp)
+	}
+}
+
+// Update User
+func TestUserService_UpdateUser_GetUserByIDError(t *testing.T) {
+	repo := &mockUserRepo{
+		getByIDFn: func(ctx context.Context, tx *gorm.DB, id string) (model.User, bool, error) {
+			return model.User{}, false, errors.New("db error")
+		},
+	}
+
+	us := NewUserService(repo, &mockJWTService{})
+
+	_, err := us.UpdateUser(context.Background(), dto.UpdateUserRequest{
+		ID: uuid.New().String(),
+	})
+
+	if !errors.Is(err, constants.ErrGetUserByID) {
+		t.Fatalf("expected ErrGetUserByID, got %v", err)
+	}
+}
+
+func TestUserService_UpdateUser_InvalidName(t *testing.T) {
+	userID := uuid.NewString()
+	invalidName := "abc"
+
+	repo := &mockUserRepo{
+		getByIDFn: func(ctx context.Context, tx *gorm.DB, id string) (model.User, bool, error) {
+			return model.User{
+				ID: uuid.MustParse(id),
+			}, true, nil
+		},
+	}
+
+	us := NewUserService(repo, &mockJWTService{})
+
+	_, err := us.UpdateUser(context.Background(), dto.UpdateUserRequest{
+		ID:   userID,
+		Name: &invalidName,
+	})
+
+	if !errors.Is(err, constants.ErrInvalidName) {
+		t.Fatalf("expected ErrInvalidName, got %v", err)
+	}
+}
+
+func TestUserService_UpdateUser_InvalidEmail(t *testing.T) {
+	userID := uuid.NewString()
+	invalidEmail := "not-an-email"
+
+	repo := &mockUserRepo{
+		getByIDFn: func(ctx context.Context, tx *gorm.DB, id string) (model.User, bool, error) {
+			return model.User{
+				ID: uuid.MustParse(id),
+			}, true, nil
+		},
+	}
+
+	us := NewUserService(repo, &mockJWTService{})
+
+	_, err := us.UpdateUser(context.Background(), dto.UpdateUserRequest{
+		ID:    userID,
+		Email: &invalidEmail,
+	})
+
+	if !errors.Is(err, constants.ErrInvalidEmail) {
+		t.Fatalf("expected ErrInvalidEmail, got %v", err)
+	}
+}
+
+func TestUserService_UpdateUser_EmailAlreadyExists(t *testing.T) {
+	userID := uuid.NewString()
+	email := "existing@mail.com"
+
+	repo := &mockUserRepo{
+		getByIDFn: func(ctx context.Context, tx *gorm.DB, id string) (model.User, bool, error) {
+			return model.User{
+				ID: uuid.MustParse(id),
+			}, true, nil
+		},
+		getByEmailFn: func(ctx context.Context, email string) (model.User, bool, error) {
+			return model.User{
+				ID: uuid.New(), 
+			}, true, nil
+		},
+	}
+
+	us := NewUserService(repo, &mockJWTService{})
+
+	_, err := us.UpdateUser(context.Background(), dto.UpdateUserRequest{
+		ID:    userID,
+		Email: &email,
+	})
+
+	if !errors.Is(err, constants.ErrEmailAlreadyExists) {
+		t.Fatalf("expected ErrEmailAlreadyExists, got %v", err)
+	}
+}
+
+func TestUserService_UpdateUser_PasswordSame(t *testing.T) {
+	userID := uuid.NewString()
+	newPassword := "password"
+
+	hashed, _ := helpers.HashPassword(newPassword)
+
+	repo := &mockUserRepo{
+		getByIDFn: func(ctx context.Context, tx *gorm.DB, id string) (model.User, bool, error) {
+			return model.User{
+				ID:       uuid.MustParse(id),
+				Password: hashed,
+			}, true, nil
+		},
+	}
+
+	us := NewUserService(repo, &mockJWTService{})
+
+	_, err := us.UpdateUser(context.Background(), dto.UpdateUserRequest{
+		ID:       userID,
+		Password: &newPassword,
+	})
+
+	if !errors.Is(err, constants.ErrPasswordSame) {
+		t.Fatalf("expected ErrPasswordSame, got %v", err)
+	}
+}
+
+func TestUserService_UpdateUser_UpdateError(t *testing.T) {
+	userID := uuid.NewString()
+
+	repo := &mockUserRepo{
+		getByIDFn: func(ctx context.Context, tx *gorm.DB, id string) (model.User, bool, error) {
+			return model.User{
+				ID: uuid.MustParse(id),
+			}, true, nil
+		},
+		updateFn: func(ctx context.Context, user model.User) error {
+			return errors.New("update error")
+		},
+	}
+
+	us := NewUserService(repo, &mockJWTService{})
+
+	_, err := us.UpdateUser(context.Background(), dto.UpdateUserRequest{
+		ID: userID,
+	})
+
+	if !errors.Is(err, constants.ErrUpdateUser) {
+		t.Fatalf("expected ErrUpdateUser, got %v", err)
+	}
+}
+
+func TestUserService_UpdateUser_Success(t *testing.T) {
+	userID := uuid.NewString()
+	newName := "New Valid Name"
+
+	repo := &mockUserRepo{
+		getByIDFn: func(ctx context.Context, tx *gorm.DB, id string) (model.User, bool, error) {
+			return model.User{
+				ID:   uuid.MustParse(id),
+				Name: "Old Name",
+			}, true, nil
+		},
+		updateFn: func(ctx context.Context, user model.User) error {
+			if user.Name != newName {
+				t.Fatalf("expected name to be updated before repo call")
+			}
+			return nil
+		},
+	}
+
+	us := NewUserService(repo, &mockJWTService{})
+
+	resp, err := us.UpdateUser(context.Background(), dto.UpdateUserRequest{
+		ID:   userID,
+		Name: &newName,
+	})
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if resp.Name != newName {
+		t.Fatalf("expected updated name %q, got %q", newName, resp.Name)
+	}
+
+	if resp.ID.String() != userID {
+		t.Fatalf("expected ID %s, got %s", userID, resp.ID)
+	}
+}
+
+
+func TestUserService_DeleteUser_GetUserByIDError(t *testing.T) {
+	userID := uuid.NewString()
+
+	repo := &mockUserRepo{
+		getByIDFn: func(ctx context.Context, tx *gorm.DB, id string) (model.User, bool, error) {
+			return model.User{}, false, errors.New("db error")
+		},
+	}
+
+	us := NewUserService(repo, &mockJWTService{})
+
+	_, err := us.DeleteUser(context.Background(), dto.DeleteUserRequest{
+		UserID: userID,
+	})
+
+	if !errors.Is(err, constants.ErrGetUserByID) {
+		t.Fatalf("expected ErrGetUserByID, got %v", err)
+	}
+}
+
+func TestUserService_DeleteUser_DeleteError(t *testing.T) {
+	userID := uuid.NewString()
+
+	repo := &mockUserRepo{
+		getByIDFn: func(ctx context.Context, tx *gorm.DB, id string) (model.User, bool, error) {
+			return model.User{
+				ID: uuid.MustParse(id),
+			}, true, nil
+		},
+		deleteByIDFn: func(ctx context.Context, userID string) error {
+			return errors.New("delete error")
+		},
+	}
+
+	us := NewUserService(repo, &mockJWTService{})
+
+	_, err := us.DeleteUser(context.Background(), dto.DeleteUserRequest{
+		UserID: userID,
+	})
+
+	if !errors.Is(err, constants.ErrDeleteUserByID) {
+		t.Fatalf("expected ErrDeleteUserByID, got %v", err)
+	}
+}
+
