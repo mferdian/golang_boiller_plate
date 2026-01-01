@@ -1,7 +1,6 @@
 # Go Boilerplate
 
 ![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-green.svg)
 ![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen)
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
 
@@ -122,16 +121,25 @@ go run main.go
 
 Please read our [Contributing Guidelines](CONTRIBUTING.md) for details on our code of conduct and development process.
 
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Acknowledgments
 
 - [Gin Web Framework](https://github.com/gin-gonic/gin) - HTTP web framework
 - [GORM](https://gorm.io/) - ORM library
 - [Air](https://github.com/cosmtrek/air) - Live reloading
-- [Viper](https://github.com/spf13/viper) - Configuration management
+
+## Inspiration & Credits
+
+### Primary References
+This boilerplate was heavily inspired by:
+- **[go-boilerplate](https://github.com/Amierza/go-boiler-plate)** - Project structure & Clean architecture patterns
+
+### Mentors 
+Special thanks to:
+- [Ahmad Mirza Rafiq Azmi](https://github.com/Amierza) for guidance on Go best practices
+
+
+**Note:** While this project draws inspiration from various sources, all code has been written from scratch or significantly modified to fit our specific use case.
 
 ## Support
 
